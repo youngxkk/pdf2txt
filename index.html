@@ -1,34 +1,44 @@
+<!-- Created by yangxinkun on 2025.12.31 -->
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF 文字提取工具 | 本地处理，安全高效</title>
+    <title>PDF Extractor Pro | Secure & Local</title>
     
-    <!-- 引入 Tailwind CSS 进行样式设计 -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- 引入 FontAwesome 图标库 -->
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- 引入 PDF.js 库 -->
+    <!-- PDF.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>
-        // 配置 PDF.js worker
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
         
-        // 配置 Tailwind 主题色
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        primary: '#4F46E5', // Indigo 600
-                        secondary: '#10B981', // Emerald 500
-                        dark: '#1F2937',
+                        primary: '#4F46E5',
+                        dark: '#111827',
+                        darkcard: '#1F2937',
                     },
                     animation: {
-                        'spin-slow': 'spin 3s linear infinite',
-                        'bounce-slow': 'bounce 2s infinite',
+                        'fade-in-up': 'fadeInUp 0.5s ease-out',
+                        'slide-down': 'slideDown 0.2s ease-out',
+                    },
+                    keyframes: {
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        slideDown: {
+                            '0%': { opacity: '0', transform: 'translateY(-10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
                     }
                 }
             }
@@ -36,165 +46,350 @@
     </script>
 
     <style>
-        /* 自定义滚动条样式 */
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 8px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #c7c7c7;
-            border-radius: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #a1a1a1;
-        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #4b5563; }
 
-        /* 玻璃拟态背景 */
         .glass-panel {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+        }
+        .dark .glass-panel {
+            background: rgba(17, 24, 39, 0.9);
+            border-bottom: 1px solid rgba(55, 65, 81, 0.5);
         }
 
-        /* 拖拽区域激活状态 */
         .drag-active {
             border-color: #4F46E5 !important;
-            background-color: #EEF2FF !important;
-            transform: scale(1.02);
+            background-color: rgba(79, 70, 229, 0.05) !important;
+            transform: scale(1.01);
+        }
+        
+        #lang-dropdown {
+            transform-origin: top right;
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-indigo-50 via-white to-purple-50 min-h-screen text-slate-800 font-sans selection:bg-indigo-100 selection:text-indigo-700">
+<body class="bg-gray-50 text-slate-800 transition-colors duration-300 dark:bg-gray-900 dark:text-gray-100 min-h-screen flex flex-col font-sans">
 
-    <!-- 顶部导航 -->
-    <nav class="w-full glass-panel sticky top-0 z-50 border-b border-gray-100 shadow-sm">
+    <!-- Navbar -->
+    <nav class="w-full glass-panel sticky top-0 z-50 transition-colors duration-300">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
                 <div class="flex items-center space-x-3">
-                    <div class="bg-indigo-600 text-white p-2 rounded-lg shadow-md">
-                        <i class="fa-solid fa-file-pdf text-xl"></i>
+                    <div class="bg-indigo-600 text-white p-2 rounded-lg shadow-lg shadow-indigo-500/30">
+                        <i class="fa-solid fa-file-pdf text-lg"></i>
                     </div>
-                    <span class="font-bold text-xl tracking-tight text-slate-800">PDF <span class="text-indigo-600">Extractor</span></span>
+                    <span class="font-bold text-xl tracking-tight">PDF <span class="text-indigo-600 dark:text-indigo-400">Extractor</span></span>
                 </div>
-                <div class="hidden md:flex items-center text-sm text-gray-500">
-                    <span class="flex items-center"><i class="fa-solid fa-shield-halved mr-2 text-emerald-500"></i> 本地处理，隐私安全</span>
+
+                <!-- Controls -->
+                <div class="flex items-center gap-2 relative">
+                    <!-- Language Dropdown -->
+                    <div class="relative">
+                        <button id="lang-btn" onclick="toggleLangDropdown(event)" class="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all border border-gray-200 dark:border-gray-700 font-medium text-sm focus:outline-none">
+                            <i class="fa-solid fa-globe"></i>
+                            <span id="current-lang-text">English</span>
+                            <i class="fa-solid fa-chevron-down text-[10px] ml-1 opacity-50"></i>
+                        </button>
+
+                        <!-- Dropdown Menu -->
+                        <div id="lang-dropdown" class="absolute right-0 mt-2 w-52 bg-white dark:bg-darkcard border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl hidden animate-slide-down z-50 overflow-hidden">
+                            <div class="p-1">
+                                <button onclick="selectLanguage('en')" class="lang-option w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-sm transition-colors group" data-lang="en">
+                                    <span class="text-gray-700 dark:text-gray-200">English</span>
+                                    <i class="fa-solid fa-check text-indigo-600 dark:text-indigo-400 opacity-0 group-[.active]:opacity-100"></i>
+                                </button>
+                                <button onclick="selectLanguage('zh')" class="lang-option w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-sm transition-colors group" data-lang="zh">
+                                    <span class="text-gray-700 dark:text-gray-200">简体中文</span>
+                                    <i class="fa-solid fa-check text-indigo-600 dark:text-indigo-400 opacity-0 group-[.active]:opacity-100"></i>
+                                </button>
+                                <button onclick="selectLanguage('tw')" class="lang-option w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-sm transition-colors group" data-lang="tw">
+                                    <span class="text-gray-700 dark:text-gray-200">繁體中文</span>
+                                    <i class="fa-solid fa-check text-indigo-600 dark:text-indigo-400 opacity-0 group-[.active]:opacity-100"></i>
+                                </button>
+                                <button onclick="selectLanguage('ja')" class="lang-option w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-sm transition-colors group" data-lang="ja">
+                                    <span class="text-gray-700 dark:text-gray-200">日本語</span>
+                                    <i class="fa-solid fa-check text-indigo-600 dark:text-indigo-400 opacity-0 group-[.active]:opacity-100"></i>
+                                </button>
+                                <button onclick="selectLanguage('fr')" class="lang-option w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-sm transition-colors group" data-lang="fr">
+                                    <span class="text-gray-700 dark:text-gray-200">Français</span>
+                                    <i class="fa-solid fa-check text-indigo-600 dark:text-indigo-400 opacity-0 group-[.active]:opacity-100"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dark Mode Toggle -->
+                    <button id="theme-toggle" onclick="toggleTheme()" class="p-2.5 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-amber-500 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-yellow-300 transition-all focus:outline-none">
+                        <i id="theme-icon" class="fa-solid fa-moon text-lg"></i>
+                    </button>
                 </div>
             </div>
         </div>
     </nav>
 
-    <!-- 主要内容区域 -->
-    <main class="max-w-5xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
+    <!-- Main Content -->
+    <main class="flex-grow w-full max-w-5xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
         
-        <!-- 标题区域 -->
+        <!-- Hero Section -->
         <div class="text-center mb-12 animate-fade-in-up">
-            <h1 class="text-4xl md:text-5xl font-extrabold text-slate-900 mb-4 tracking-tight">
-                瞬间将 PDF 转换为可编辑文本
+            <h1 class="text-4xl md:text-5xl font-extrabold mb-4 tracking-tight text-slate-900 dark:text-white">
+                <span data-i18n="heroTitle">Convert PDF to Text Instantly</span>
             </h1>
-            <p class="text-lg text-slate-600 max-w-2xl mx-auto">
-                上传您的文档，我们将帮您提取其中的所有文字。支持智能排版优化，一键导出 Markdown 或 TXT，完全免费。
+            <p class="text-lg text-slate-600 dark:text-gray-400 max-w-2xl mx-auto" data-i18n="heroSubtitle">
+                Securely extract text from your documents directly in your browser. No upload to server. Export to Markdown or TXT.
             </p>
         </div>
 
-        <!-- 上传区域 -->
-        <div id="upload-section" class="max-w-3xl mx-auto transition-all duration-300">
-            <div id="drop-zone" class="relative group cursor-pointer bg-white rounded-3xl border-2 border-dashed border-gray-300 hover:border-indigo-400 hover:shadow-xl transition-all duration-300 p-12 text-center overflow-hidden">
-                
-                <!-- 装饰背景圆圈 -->
-                <div class="absolute -right-10 -top-10 w-40 h-40 bg-indigo-50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
-                <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-purple-50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
-
+        <!-- Upload Section -->
+        <div id="upload-section" class="max-w-3xl mx-auto transition-all duration-300 animate-fade-in-up">
+            <div id="drop-zone" class="relative group cursor-pointer bg-white dark:bg-darkcard rounded-3xl border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-indigo-500 dark:hover:border-indigo-400 hover:shadow-xl transition-all duration-300 p-12 text-center overflow-hidden">
                 <input type="file" id="file-input" class="hidden" accept="application/pdf">
-                
                 <div class="relative z-10">
-                    <div class="w-20 h-20 bg-indigo-50 text-indigo-600 rounded-2xl mx-auto flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform duration-300">
+                    <div class="w-20 h-20 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-2xl mx-auto flex items-center justify-center mb-6 shadow-sm group-hover:scale-110 transition-transform duration-300">
                         <i class="fa-solid fa-cloud-arrow-up text-3xl"></i>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-800 mb-2">点击或拖拽 PDF 文件到此处</h3>
-                    <p class="text-gray-500 text-sm mb-6">支持任意大小的 PDF 文档</p>
-                    <button class="bg-indigo-600 text-white px-8 py-3 rounded-full font-medium hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all active:scale-95">
-                        选择文件
-                    </button>
+                    <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-2" data-i18n="dropTitle">Click or Drag PDF Here</h3>
+                    <p class="text-gray-500 dark:text-gray-400 text-sm mb-6" data-i18n="dropSubtitle">Supports PDFs of any size</p>
+                    <button class="bg-indigo-600 text-white px-8 py-3 rounded-full font-medium hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-500/30 transition-all active:scale-95" data-i18n="selectFileBtn">Select File</button>
                 </div>
             </div>
         </div>
 
-        <!-- 加载状态 (隐藏) -->
+        <!-- Loading Section -->
         <div id="loading-section" class="hidden max-w-3xl mx-auto text-center py-16">
-            <div class="relative w-24 h-24 mx-auto mb-8">
-                <div class="absolute inset-0 border-4 border-indigo-100 rounded-full"></div>
-                <div class="absolute inset-0 border-4 border-indigo-600 rounded-full border-t-transparent animate-spin"></div>
-                <i class="fa-solid fa-robot absolute inset-0 flex items-center justify-center text-indigo-600 text-2xl"></i>
+            <div class="relative w-20 h-20 mx-auto mb-8">
+                <div class="absolute inset-0 border-4 border-indigo-100 dark:border-gray-700 rounded-full"></div>
+                <div class="absolute inset-0 border-4 border-indigo-600 dark:border-indigo-500 rounded-full border-t-transparent animate-spin"></div>
             </div>
-            <h3 class="text-2xl font-bold text-gray-800 mb-2">正在智能识别...</h3>
-            <p id="progress-text" class="text-gray-500">正在初始化解析引擎</p>
+            <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-2" data-i18n="processingTitle">Processing Document...</h3>
+            <p id="progress-text" class="text-gray-500 dark:text-gray-400">Initializing engine...</p>
         </div>
 
-        <!-- 结果区域 (隐藏) -->
-        <div id="result-section" class="hidden animate-fade-in-up">
-            
-            <!-- 操作栏 -->
-            <div class="bg-white rounded-t-2xl border-b border-gray-100 p-4 flex flex-col md:flex-row justify-between items-center gap-4 shadow-sm">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-red-100 text-red-500 rounded-lg flex items-center justify-center">
+        <!-- Result Section -->
+        <div id="result-section" class="hidden flex flex-col animate-fade-in-up">
+            <!-- Toolbar -->
+            <div class="bg-white dark:bg-darkcard rounded-t-2xl border border-b-0 border-gray-200 dark:border-gray-700 p-4 flex flex-col md:flex-row justify-between items-center gap-4 shadow-sm z-10">
+                <div class="flex items-center gap-3 w-full md:w-auto">
+                    <div class="w-10 h-10 bg-red-100 dark:bg-red-900/30 text-red-500 dark:text-red-400 rounded-lg flex items-center justify-center shrink-0">
                         <i class="fa-solid fa-file-pdf"></i>
                     </div>
-                    <div>
-                        <h4 id="file-name" class="font-bold text-gray-800 truncate max-w-[200px]">document.pdf</h4>
-                        <span id="page-count" class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">0 页</span>
+                    <div class="min-w-0">
+                        <h4 id="file-name" class="font-bold text-gray-800 dark:text-gray-100 truncate max-w-[150px] md:max-w-[200px]">doc.pdf</h4>
+                        <span id="page-count" class="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">0 pages</span>
                     </div>
                 </div>
 
-                <div class="flex flex-wrap gap-2">
-                    <button onclick="formatToMarkdown()" class="px-4 py-2 text-sm bg-amber-500 text-white hover:bg-amber-600 rounded-lg shadow-md shadow-amber-200 transition-all flex items-center gap-2" title="智能合并断行，优化排版">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i> 一键美化
+                <div class="flex flex-wrap justify-end gap-2 w-full md:w-auto">
+                    <button onclick="formatToMarkdown()" class="px-3 py-2 text-sm bg-amber-500 hover:bg-amber-600 text-white rounded-lg shadow-sm transition-colors flex items-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> <span class="hidden sm:inline" data-i18n="btnBeautify">Beautify</span>
                     </button>
-                    <div class="h-6 w-px bg-gray-300 mx-1 self-center hidden md:block"></div>
-                    <button onclick="copyText()" class="px-4 py-2 text-sm text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors flex items-center gap-2">
-                        <i class="fa-regular fa-copy"></i> 复制
+                    <div class="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1 self-center hidden md:block"></div>
+                    <button onclick="copyText()" class="px-3 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                        <i class="fa-regular fa-copy"></i>
                     </button>
-                    <button onclick="downloadFile('txt')" class="px-4 py-2 text-sm bg-white border border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 rounded-lg shadow-sm transition-all flex items-center gap-2">
-                        <i class="fa-solid fa-file-lines text-gray-400"></i> 导出 TXT
+                    <button onclick="downloadFile('txt')" class="px-3 py-2 text-sm bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-lg transition-colors flex items-center gap-2">
+                        <i class="fa-solid fa-file-lines"></i> TXT
                     </button>
-                    <button onclick="downloadFile('md')" class="px-4 py-2 text-sm bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg shadow-md shadow-indigo-200 transition-all flex items-center gap-2">
-                        <i class="fa-brands fa-markdown"></i> 导出 MD
+                    <button onclick="downloadFile('md')" class="px-3 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg shadow-md transition-colors flex items-center gap-2">
+                        <i class="fa-brands fa-markdown"></i> MD
                     </button>
-                    <button onclick="resetApp()" class="ml-2 px-3 py-2 text-gray-400 hover:text-red-500 transition-colors" title="重新开始">
+                    <button onclick="resetApp()" class="ml-1 px-3 py-2 text-gray-400 hover:text-red-500 transition-colors">
                         <i class="fa-solid fa-rotate-right"></i>
                     </button>
                 </div>
             </div>
 
-            <!-- 编辑器区域 -->
-            <div class="bg-white rounded-b-2xl shadow-xl border border-gray-200 h-[600px] flex flex-col relative">
-                <div class="absolute top-4 right-6 text-xs text-gray-400 pointer-events-none z-10">可编辑区域</div>
-                <textarea id="output-text" class="w-full h-full p-6 resize-none focus:outline-none focus:bg-gray-50/50 transition-colors custom-scrollbar text-gray-700 leading-relaxed font-mono text-sm" spellcheck="false" placeholder="解析的内容将显示在这里..."></textarea>
+            <!-- Editor -->
+            <div class="relative h-[600px] group">
+                <textarea id="output-text" class="w-full h-full p-6 resize-none bg-white dark:bg-darkcard border border-gray-200 dark:border-gray-700 rounded-b-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-colors custom-scrollbar text-gray-700 dark:text-gray-300 leading-relaxed font-mono text-sm" spellcheck="false"></textarea>
+                <div class="absolute top-4 right-6 text-xs text-gray-300 dark:text-gray-600 pointer-events-none" data-i18n="editorLabel">Editable Area</div>
             </div>
 
-            <!-- 提示信息 -->
-            <p class="text-center text-gray-400 text-sm mt-6">
-                <i class="fa-solid fa-circle-info mr-1"></i> 提示：点击“一键美化”可自动合并由于 PDF 格式导致的断行。
+            <p class="text-center text-gray-400 dark:text-gray-500 text-sm mt-6">
+                <i class="fa-solid fa-circle-info mr-1"></i> <span data-i18n="footerTip">Tip: Click "Beautify" to fix line breaks.</span>
             </p>
         </div>
-
     </main>
 
-    <!-- 页脚 -->
-    <footer class="border-t border-gray-200 mt-12 py-8 bg-white/50 backdrop-blur-sm">
+    <!-- Footer -->
+    <footer class="border-t border-gray-200 dark:border-gray-800 py-8 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm">
         <div class="max-w-6xl mx-auto px-4 text-center">
-            <p class="text-gray-400 text-sm">© 2024 PDF Extractor Tool. Designed for Efficiency.</p>
+            <p class="text-gray-400 dark:text-gray-600 text-sm">© 2024 PDF Extractor. <span data-i18n="privacy">100% Client-side Processing.</span></p>
         </div>
     </footer>
 
-    <!-- Toast 通知容器 -->
+    <!-- Toast Container -->
     <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
     <script>
-        // DOM 元素引用
-        const dropZone = document.getElementById('drop-zone');
+        // --- Translations ---
+        const translations = {
+            en: {
+                heroTitle: "Convert PDF to Text Instantly",
+                heroSubtitle: "Securely extract text from your documents directly in your browser. No upload to server. Export to Markdown or TXT.",
+                dropTitle: "Click or Drag PDF Here",
+                dropSubtitle: "Supports PDFs of any size",
+                selectFileBtn: "Select File",
+                processingTitle: "Processing Document...",
+                btnBeautify: "Beautify",
+                editorLabel: "Editable Area",
+                footerTip: "Tip: Click \"Beautify\" to fix line breaks from PDF.",
+                privacy: "100% Client-side Processing.",
+                toastFileError: "Please upload a PDF file.",
+                toastSuccess: "Extraction Complete!",
+                toastFail: "Extraction Failed. File might be encrypted.",
+                toastCopied: "Copied to clipboard",
+                toastEmpty: "No text to process",
+                toastFormat: "Formatting complete!",
+                toastDownload: "Downloading file...",
+                pagePrefix: "Page",
+                pageSuffix: ""
+            },
+            zh: {
+                heroTitle: "瞬间将 PDF 转换为文本",
+                heroSubtitle: "直接在浏览器中安全提取文档文字。无需上传服务器。支持导出 Markdown 或 TXT。",
+                dropTitle: "点击或拖拽 PDF 到此处",
+                dropSubtitle: "支持任意大小的 PDF 文档",
+                selectFileBtn: "选择文件",
+                processingTitle: "正在解析文档...",
+                btnBeautify: "一键美化",
+                editorLabel: "可编辑区域",
+                footerTip: "提示：点击“一键美化”可修复 PDF 导致的断行。",
+                privacy: "100% 本地处理，隐私安全。",
+                toastFileError: "请上传 PDF 格式的文件",
+                toastSuccess: "解析成功！",
+                toastFail: "解析失败，文件可能已加密。",
+                toastCopied: "已复制到剪贴板",
+                toastEmpty: "没有可处理的文字",
+                toastFormat: "格式美化完成！",
+                toastDownload: "正在下载文件...",
+                pagePrefix: "第",
+                pageSuffix: "页"
+            },
+            tw: {
+                heroTitle: "瞬間將 PDF 轉換為純文字",
+                heroSubtitle: "直接在瀏覽器中安全地擷取文件文字，無需上傳至伺服器。支援匯出為 Markdown 或 TXT 格式。",
+                dropTitle: "點擊或拖曳 PDF 至此處",
+                dropSubtitle: "支援任何大小的 PDF 檔案",
+                selectFileBtn: "選取檔案",
+                processingTitle: "正在解析文件...",
+                btnBeautify: "排版美化",
+                editorLabel: "編輯區域",
+                footerTip: "提示：點擊「排版美化」可修正 PDF 造成的斷行問題。",
+                privacy: "100% 本地端處理，確保資訊隱私。",
+                toastFileError: "請上傳 PDF 格式的檔案",
+                toastSuccess: "擷取成功！",
+                toastFail: "擷取失敗，檔案可能已加密或損壞。",
+                toastCopied: "已複製至剪貼簿",
+                toastEmpty: "沒有可處理的文字內容",
+                toastFormat: "格式優化完成！",
+                toastDownload: "檔案下載中...",
+                pagePrefix: "第",
+                pageSuffix: "頁"
+            },
+            ja: {
+                heroTitle: "PDFを瞬時にテキストに変換",
+                heroSubtitle: "ブラウザで直接、安全にドキュメントからテキストを抽出します。サーバーへのアップロードは不要。MarkdownまたはTXTにエクスポート。",
+                dropTitle: "ここにPDFをクリックまたはドラッグ",
+                dropSubtitle: "任意のサイズのPDFをサポート",
+                selectFileBtn: "文件を選択",
+                processingTitle: "ドキュメントを処理中...",
+                btnBeautify: "整形",
+                editorLabel: "編集エリア",
+                footerTip: "ヒント: 「整形」をクリックして改行を修正します。",
+                privacy: "100% クライアントサイド処理。",
+                toastFileError: "PDFファイルをアップロードしてください。",
+                toastSuccess: "抽出完了！",
+                toastFail: "抽出に失敗しました。ファイルが暗号化されている可能性があります。",
+                toastCopied: "クリップボードにコピーしました",
+                toastEmpty: "処理するテキストがありません",
+                toastFormat: "整形完了！",
+                toastDownload: "ファイルをダウンロード中...",
+                pagePrefix: "第",
+                pageSuffix: "ページ"
+            },
+            fr: {
+                heroTitle: "Convertir PDF en texte instantanément",
+                heroSubtitle: "Extrayez le texte de vos documents en toute sécurité directement dans votre navigateur. Aucun téléchargement sur serveur. Exportez en Markdown ou TXT.",
+                dropTitle: "Cliquez ou glissez le PDF ici",
+                dropSubtitle: "Prend en charge les PDF de toute taille",
+                selectFileBtn: "Sélectionner un fichier",
+                processingTitle: "Traitement du document...",
+                btnBeautify: "Embellir",
+                editorLabel: "Zone modifiable",
+                footerTip: "Conseil : Cliquez sur \"Embellir\" pour corriger les sauts de ligne.",
+                privacy: "Traitement 100% côté client.",
+                toastFileError: "Veuillez télécharger un fichier PDF.",
+                toastSuccess: "Extraction terminée !",
+                toastFail: "Échec de l'extraction. Le fichier peut être crypté.",
+                toastCopied: "Copié dans le presse-papiers",
+                toastEmpty: "Aucun texte à traiter",
+                toastFormat: "Formatage terminé !",
+                toastDownload: "Téléchargement du fichier...",
+                pagePrefix: "Page",
+                pageSuffix: ""
+            }
+        };
+
+        const langNames = { en: 'English', zh: '中文 (简体)', tw: '繁體中文 (台灣)', ja: '日本語', fr: 'Français' };
+        let currentLang = 'en';
+        let currentFileName = 'document';
+
+        function toggleLangDropdown(event) {
+            event.stopPropagation();
+            const dropdown = document.getElementById('lang-dropdown');
+            dropdown.classList.toggle('hidden');
+            updateLangOptions();
+        }
+
+        function updateLangOptions() {
+            document.querySelectorAll('.lang-option').forEach(opt => {
+                if (opt.dataset.lang === currentLang) opt.classList.add('active');
+                else opt.classList.remove('active');
+            });
+        }
+
+        window.addEventListener('click', () => {
+            const dropdown = document.getElementById('lang-dropdown');
+            if (!dropdown.classList.contains('hidden')) dropdown.classList.add('hidden');
+        });
+
+        function initTheme() {
+            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+                updateThemeIcon(true);
+            } else {
+                document.documentElement.classList.remove('dark');
+                updateThemeIcon(false);
+            }
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.theme = isDark ? 'dark' : 'light';
+            updateThemeIcon(isDark);
+        }
+
+        function updateThemeIcon(isDark) {
+            const icon = document.getElementById('theme-icon');
+            if (isDark) { icon.classList.replace('fa-moon', 'fa-sun'); } 
+            else { icon.classList.replace('fa-sun', 'fa-moon'); }
+        }
+
+        function selectLanguage(lang) {
+            currentLang = lang;
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[currentLang][key]) el.textContent = translations[currentLang][key];
+            });
+            document.getElementById('current-lang-text').textContent = langNames[lang];
+        }
+
         const fileInput = document.getElementById('file-input');
         const uploadSection = document.getElementById('upload-section');
         const loadingSection = document.getElementById('loading-section');
@@ -203,68 +398,25 @@
         const fileNameEl = document.getElementById('file-name');
         const pageCountEl = document.getElementById('page-count');
         const progressText = document.getElementById('progress-text');
+        const dropZone = document.getElementById('drop-zone');
 
-        let currentFileName = 'document';
+        initTheme();
+        
+        dropZone.onclick = () => fileInput.click();
+        fileInput.onchange = (e) => handleFiles(e.target.files);
 
-        // 事件监听：点击上传
-        dropZone.addEventListener('click', () => fileInput.click());
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(ev => dropZone.addEventListener(ev, e => {
+            e.preventDefault(); e.stopPropagation();
+            if (ev === 'dragenter' || ev === 'dragover') dropZone.classList.add('drag-active');
+            else dropZone.classList.remove('drag-active');
+            if (ev === 'drop') handleFiles(e.dataTransfer.files);
+        }));
 
-        // 事件监听：文件选择
-        fileInput.addEventListener('change', handleFileSelect);
-
-        // 事件监听：拖拽
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, preventDefaults, false);
-        });
-
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropZone.addEventListener(eventName, highlight, false);
-        });
-
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, unhighlight, false);
-        });
-
-        function highlight() {
-            dropZone.classList.add('drag-active');
-        }
-
-        function unhighlight() {
-            dropZone.classList.remove('drag-active');
-        }
-
-        dropZone.addEventListener('drop', handleDrop, false);
-
-        function handleDrop(e) {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-            handleFiles(files);
-        }
-
-        function handleFileSelect(e) {
-            const files = e.target.files;
-            handleFiles(files);
-        }
-
-        function handleFiles(files) {
-            if (files.length > 0) {
-                const file = files[0];
-                if (file.type === 'application/pdf') {
-                    processPDF(file);
-                } else {
-                    showToast('请上传 PDF 格式的文件', 'error');
-                }
-            }
-        }
-
-        // 核心功能：处理 PDF
-        async function processPDF(file) {
-            // UI 状态切换
+        async function handleFiles(files) {
+            if (!files.length) return;
+            const file = files[0];
+            if (file.type !== 'application/pdf') return showToast(translations[currentLang].toastFileError, 'error');
+            
             uploadSection.classList.add('hidden');
             loadingSection.classList.remove('hidden');
             currentFileName = file.name.replace('.pdf', '');
@@ -272,218 +424,69 @@
 
             try {
                 const arrayBuffer = await file.arrayBuffer();
-                
-                // 加载 PDF 文档
-                const loadingTask = pdfjsLib.getDocument(arrayBuffer);
-                const pdf = await loadingTask.promise;
-                
-                pageCountEl.textContent = `${pdf.numPages} 页`;
+                const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+                const pageLabel = (currentLang === 'ja' ? 'ページ' : (currentLang === 'en' || currentLang === 'fr' ? 'Pages' : (currentLang === 'tw' ? '頁' : '页')));
+                pageCountEl.textContent = `${pdf.numPages} ${pageLabel}`;
                 
                 let fullText = "";
-
-                // 循环遍历页面
                 for (let i = 1; i <= pdf.numPages; i++) {
-                    progressText.textContent = `正在解析第 ${i} / ${pdf.numPages} 页...`;
-                    
+                    progressText.textContent = `${translations[currentLang].pagePrefix} ${i} / ${pdf.numPages}`;
                     const page = await pdf.getPage(i);
                     const textContent = await page.getTextContent();
-                    
-                    // 提取文本项并拼接
-                    let lastY = -1;
-                    let pageText = "";
-                    
-                    for (const item of textContent.items) {
-                        // 简单的分行逻辑：如果Y坐标变化较大，则换行
-                        if (lastY !== -1 && Math.abs(item.transform[5] - lastY) > 10) {
-                            pageText += "\n";
-                        } else if (lastY !== -1) {
-                            pageText += " "; // 同一行加空格
-                        }
-                        
-                        pageText += item.str;
-                        lastY = item.transform[5];
-                    }
-
-                    // 添加页眉分隔符
-                    fullText += `--- 第 ${i} 页 ---\n\n${pageText}\n\n\n`;
+                    let pageText = textContent.items.map(item => item.str).join(' ');
+                    const t = translations[currentLang];
+                    fullText += `--- ${t.pagePrefix} ${i} ${t.pageSuffix} ---\n\n${pageText}\n\n\n`;
                 }
-
-                // 完成
                 outputText.value = fullText;
                 loadingSection.classList.add('hidden');
                 resultSection.classList.remove('hidden');
-                showToast('解析成功！点击“一键美化”优化排版');
-
-            } catch (error) {
-                console.error(error);
+                showToast(translations[currentLang].toastSuccess);
+            } catch (err) {
                 loadingSection.classList.add('hidden');
                 uploadSection.classList.remove('hidden');
-                showToast('解析失败，请检查文件是否损坏或加密', 'error');
+                showToast(translations[currentLang].toastFail, 'error');
             }
         }
 
-        // 功能：一键美化 Markdown 格式
         function formatToMarkdown() {
             let text = outputText.value;
-            if (!text) {
-                showToast('没有可处理的文字', 'error');
-                return;
-            }
-
-            showToast('正在智能排版...', 'success');
-
-            // 1. 统一换行符
-            text = text.replace(/\r\n/g, '\n');
-
-            // 2. 将页码分隔符转换为 Markdown 标题
-            // 原始: --- 第 1 页 ---
-            // 目标: ## 第 1 页
-            text = text.replace(/^--- 第 (\d+) 页 ---$/gm, '\n## 第 $1 页\n');
-
-            // 3. 智能合并断行
-            const lines = text.split('\n');
-            let newLines = [];
-            let buffer = '';
-
-            // 判断是否为中文字符的正则
-            const isCJK = (str) => /[\u4e00-\u9fa5]/.test(str);
-
-            for (let i = 0; i < lines.length; i++) {
-                let line = lines[i].trim();
-
-                // 如果是空行
-                if (line.length === 0) {
-                    if (buffer) { 
-                        newLines.push(buffer); 
-                        buffer = ''; 
-                    }
-                    newLines.push(''); // 保留一个空行作为段落分隔
-                    continue;
-                }
-
-                // 如果是标题 (以 # 开头) 或 列表项 (数字. 或 - 或 •)
-                // 这些通常是独立的行，不应被合并到上一行
-                if (line.startsWith('#') || line.match(/^(\d+\.|-|•|\*)\s+/)) {
-                    if (buffer) { 
-                        newLines.push(buffer); 
-                        buffer = ''; 
-                    }
-                    newLines.push(line);
-                    continue;
-                }
-
-                // 合并逻辑：
-                // 如果 buffer 为空，直接存入 buffer
-                if (!buffer) {
-                    buffer = line;
-                } else {
-                    // 如果 buffer 不为空，需要决定如何连接
-                    const lastChar = buffer.slice(-1);
-                    const firstChar = line[0];
-
-                    // 如果两个都是中文，直接连接（不加空格）
-                    if (isCJK(lastChar) && isCJK(firstChar)) {
-                        buffer += line;
-                    } else {
-                        // 否则（英文或混排），加个空格
-                        buffer += ' ' + line;
-                    }
-                }
-
-                // 启发式判断段落结束：
-                // 如果行尾是结束标点 (. ! ? 。 ！ ？ ” ")，或者行很短（可能是标题但没识别出来）
-                // 则认为这行是段落的结尾，刷新 buffer
-                if (/[.!?。！？”"]$/.test(line) || (line.length < 50 && !line.match(/[,，、]/))) {
-                    newLines.push(buffer);
-                    buffer = '';
-                }
-            }
-            
-            // 处理剩余的 buffer
-            if (buffer) newLines.push(buffer);
-
-            // 重新组合
-            text = newLines.join('\n');
-
-            // 4. 清理多余空行 (超过2个换行替换为2个)
-            text = text.replace(/\n{3,}/g, '\n\n');
-
-            // 更新文本框
-            outputText.value = text;
-            showToast('格式美化完成！');
+            if (!text) return showToast(translations[currentLang].toastEmpty, 'error');
+            text = text.replace(/^--- (Page|第) (\d+) (页|頁|ページ)?\s?---$/gm, '\n## Page $2\n');
+            outputText.value = text.replace(/\n{3,}/g, '\n\n');
+            showToast(translations[currentLang].toastFormat);
         }
 
-        // 功能：复制文本
         function copyText() {
             outputText.select();
             document.execCommand('copy');
-            showToast('已复制到剪贴板');
+            showToast(translations[currentLang].toastCopied);
         }
 
-        // 功能：下载文件
         function downloadFile(type) {
-            let content = outputText.value;
-            if (!content) return;
-
-            let mimeType, extension, formattedContent;
-
-            if (type === 'md') {
-                mimeType = 'text/markdown';
-                extension = 'md';
-                // 确保有标题
-                if (!content.startsWith('# ')) {
-                     formattedContent = `# ${currentFileName}\n\n${content}`;
-                } else {
-                     formattedContent = content;
-                }
-            } else {
-                mimeType = 'text/plain';
-                extension = 'txt';
-                formattedContent = content;
-            }
-
-            const blob = new Blob([formattedContent], { type: mimeType });
+            if (!outputText.value) return;
+            const blob = new Blob([outputText.value], { type: type === 'md' ? 'text/markdown' : 'text/plain' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `${currentFileName}_extracted.${extension}`;
-            document.body.appendChild(a);
+            a.download = `${currentFileName}_extracted.${type}`;
             a.click();
-            document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            
-            showToast(`已开始下载 .${extension} 文件`);
+            showToast(translations[currentLang].toastDownload);
         }
 
-        // 功能：重置 App
         function resetApp() {
-            fileInput.value = '';
-            outputText.value = '';
-            resultSection.classList.add('hidden');
-            uploadSection.classList.remove('hidden');
-            currentFileName = 'document';
+            fileInput.value = ''; outputText.value = '';
+            resultSection.classList.add('hidden'); uploadSection.classList.remove('hidden');
         }
 
-        // UI 组件：Toast 通知
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
-            
-            // 样式配置
-            const bgClass = type === 'error' ? 'bg-red-500' : 'bg-slate-800';
-            const icon = type === 'error' ? '<i class="fa-solid fa-circle-xmark"></i>' : '<i class="fa-solid fa-circle-check"></i>';
-            
-            toast.className = `${bgClass} text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-y-10 opacity-0 flex items-center gap-3`;
-            toast.innerHTML = `${icon} <span>${message}</span>`;
-            
+            const isDark = document.documentElement.classList.contains('dark');
+            toast.className = `${type === 'error' ? 'bg-red-500' : (isDark ? 'bg-gray-700' : 'bg-slate-800')} text-white px-5 py-3 rounded-xl shadow-xl transform transition-all duration-300 translate-y-10 opacity-0 flex items-center gap-2 border border-white/10 text-sm font-medium`;
+            toast.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-circle-xmark' : 'fa-circle-check'}"></i> <span>${message}</span>`;
             container.appendChild(toast);
-
-            // 动画入口
-            requestAnimationFrame(() => {
-                toast.classList.remove('translate-y-10', 'opacity-0');
-            });
-
-            // 自动移除
+            requestAnimationFrame(() => toast.classList.remove('translate-y-10', 'opacity-0'));
             setTimeout(() => {
                 toast.classList.add('translate-y-10', 'opacity-0');
                 setTimeout(() => toast.remove(), 300);
